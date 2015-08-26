@@ -81,11 +81,13 @@ into queue and shoved back into dispach. Note that that listeners
 are notified only after every effect has been dispached.
 
 ###So that mean i can dispach from reducer? 
+
 Yes and know. You can return action
 as effect and that action will be passed after original dispach has finished.
 Anyways i don't think this is good idea to dispach sync action as effect.
 
 ###So what sould i put in effect if it's not recomanded to put there sync actions?
+
 You should put there something with side effects what your middlewares can perform for you.
 So if you use [thunk-middleware](https://github.com/gaearon/redux-thunk)
 feel free to return fucntion that will get dispach and get state as argument.
@@ -105,7 +107,10 @@ Short answer yes. More detailed anwer is that in order to support replay
 and other godnes of dev tools current implementation is that for every action
 effects are evaluated only once. So if dev tools replay action this lib know that
 it should skip evaluating effects. 
-Limitation which you already probably follow:
+
+
+Limitation which you probably already follow:
+
 1. your actions has to be object
 2. you should never dispach same object twice
 3. your object should not be freezed 
