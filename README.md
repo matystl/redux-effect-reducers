@@ -1,17 +1,49 @@
-library-boilerplate
+Effect for reducers in redux library
 =========================
 
-An opinionated setup I plan to use for my libraries.
+This library bring power of async operation back to reducers in [redux](https://github.com/rackt/redux).
 
-It has CommonJS and UMD builds via Babel and Webpack, ESLint, and Mocha.  
-It also has React-friendly examples folder with library code mapped to the sources.
+# Usage
 
-If you use this, make sure to grep for “library-boilerplate” and replace every occurrence.
-See `package.json` in the root and the example folder for the list of the available commands.
+With this plugin signature of reducer is changed to 
 
-Note that this is an *opinionated* boilerplate. You might want to:
+```(state,action) => newState | withSideEffect(newState, effect1, effect2, ...)```
 
-* Set `stage` to `2` in `.babelrc` so you don’t depend on language features that might be gone tomorrow;
-* Remove `loose: ["all"]` from `.babelrc` so the behavior is spec-compliant.
+So simple example for logging user without async action creator will look this way
+```
+import {withSideEffect} from 'redux-effect-reducers'
 
-You have been warned.
+function loadUser(dispach) {
+  ajax('url_to_load_user')
+  .then((user) => dispach({
+    type: LOGIN_SUCCESSFULL,
+    user: user
+  }))
+  .catch((e) => dispach(
+    type: LOGIN_FAILED,
+    error: e
+  ))
+}
+
+function reducer(state = defaultState, action) {
+  switch(action.type) {
+    case LOGIN_USER:
+      new_state = ... // set state of user to loading
+      return withSideEffect(newState, loadUser)
+    case LOGIN_SUCCESSFULL:
+      new_state = ... // set state of user to logged
+      return new_state;
+    case LOGIN_FAILED:
+      new_state = ... // maybe you want to retry few times before
+      // you show user error so you can increase retry count
+      // and return new state with same ajax to load user
+      // or if retry count is height enought return state without effect
+  }
+}
+```
+
+#Usage
+
+```
+  import
+```

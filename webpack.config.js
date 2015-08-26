@@ -29,7 +29,7 @@ module.exports = {
     }]
   },
   output: {
-    library: 'library-boilerplate',
+    library: 'redux-effect-reducers',
     libraryTarget: 'umd'
   },
   plugins: plugins,
