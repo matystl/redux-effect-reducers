@@ -1,25 +1,29 @@
 {
-  "name": "library-boilerplate-example",
+  "name": "redux-effect-reducers-example",
   "version": "1.0.0",
-  "description": "library-boilerplate-example-description",
+  "description": "Simple example of effect reducers",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/library-boilerplate-author/library-boilerplate.git"
+    "url": "https://github.com/matystl/redux-effect-reducers.git"
   },
   "keywords": [
-    "library-boilerplate-keywords"
+    ""
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/library-boilerplate-author/library-boilerplate/issues"
+    "url": "https://github.com/matystl/redux-effect-reducers/issues"
   },
-  "homepage": "https://github.com/library-boilerplate-author/library-boilerplate",
+  "homepage": "https://github.com/matystl/redux-effect-reducers",
   "dependencies": {
-    "react": "^0.13.3"
+    "react": "^0.13.3",
+    "react-redux": "^0.9.0",
+    "redux": "^1.0.1",
+    "redux-thunk": "^0.1.0",
+    "redux-devtools": "1.0.0"
   },
   "devDependencies": {
     "babel-core": "^5.6.18",
