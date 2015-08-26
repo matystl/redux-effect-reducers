@@ -114,7 +114,11 @@ Limitation which you already probably follow:
 
 TODO explain differences to original reducer and implement stripEffects
 
-# Motivation example
+# More complex example
+
+TODO loging user with widgets that need to load data after user has been logged
+and can be not presented on current screen
+
 
 #Thanks
 
