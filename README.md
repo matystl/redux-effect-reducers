@@ -52,7 +52,7 @@ function reducer(state = defaultState, action) {
 
 So now you know how to return effects from reducers now lets look
 what is needed to make them work with redux. You will need to 2 function from
-this library. `enableEffects` should encapsulate applyMiddleware. 
+this library. `enableEffects` should encapsulate `applyMiddleware`. 
 And function `combineReducersWithEffects` is replacement for
 `combineReducers`.
 
@@ -77,7 +77,7 @@ const store = createStoreWithMiddleware(reducer);
 Effect should be anything that is pure. So object is ok. Function is also ok.
 Promises are not ok. What happen with effects is that after you dispach
 action and you return effects they are colleted by enableEffects store enhencer
-into queue and shoved back into dispach. Note that that listeners
+into queue and shoved back into dispach path(through middlewares). Note that that listeners
 are notified only after every effect has been dispached.
 
 ###So that mean i can dispach from reducer? 
@@ -85,13 +85,15 @@ are notified only after every effect has been dispached.
 Yes and know. You can return action
 as effect and that action will be passed after original dispach has finished.
 Anyways i don't think this is good idea to dispach sync action as effect.
+So you have been warned that it's probably bad ida. 
 
 ###So what sould i put in effect if it's not recomanded to put there sync actions?
 
-You should put there something with side effects what your middlewares can perform for you.
+You should put there something with encapsulated "side effects" what your
+ middlewares can perform for you.
 So if you use [thunk-middleware](https://github.com/gaearon/redux-thunk)
 feel free to return fucntion that will get dispach and get state as argument.
-If you use some middleware that can make declarative ajax-es for you can
+If you use some middleware that can make declarative ajax-es, you can
 put this declarative ajax as effect.
  
 It's up to you what middlewares you have and therefore what kind of
@@ -99,7 +101,7 @@ It's up to you what middlewares you have and therefore what kind of
 
 Just reminder don't return promises as effects. You can use 
 [redux-promise](https://github.com/acdlite/redux-promise) but only from
-action creators not as effects because they are not pure.
+action creators not as effects because promises are inherently unpure.
 
 # Is this working with redux [devtools](https://github.com/gaearon/redux-devtools)
 
@@ -117,21 +119,120 @@ Limitation which you probably already follow:
 
 # Testing
 
-TODO explain differences to original reducer and implement stripEffects
+Testing is not realy different than as in combination of async action creator 
+and pure reducer. Normaly you would have 2 kinds of test for async actions 
+one for action creator that is's producing side effects things and second suit
+of test for your pure reducers that results of async flow is stored in state.
 
-# More complex example
+Same is true for effectfull reducers. One type of test would be that in
+certain state and action reducer produce some effects. Second suit of test
+is that in respons to async actions(action for async action together with responce from async action)
+you will get to correct state. For second scenario just use simple helper that will strip
+away effects from reducer and call reduce over action on reducer without effects.
 
-TODO loging user with widgets that need to load data after user has been logged
-and can be not presented on current screen
+```
+stripEffects(reducer) => (state, action) => {
+  const newState = reducer(state, action) 
+  return (newState instanceof StateAndEffect)? newState.state : newState;
+}
 
+//test my reducer without effects
+const newReducer = stripEffects(originalReducer);
+const resultState = [
+  // action that will produce effect
+  // action that is result of async effect
+].reduce(newReducer, newReducer())
+//check if new state is as expected
+```
+
+# More complex motivation example
+
+Ok so you are still not convinced that this is good idea. I don't blame you and probably
+it's not best solution for all async actions. My best aproximation till now is that 
+async action that don't use getState are good as they are(in action creators).
+
+For action creators that have to read from state problem is that your getState 
+get whole state. So if you change state structure your reducer will not have problem
+with it anyway your action creators will.
+
+### Page with multiple widget for logged and unloged users
+
+Imagine that you have on page multiple widgets. They can be shown or hidden. Also
+your page is accessible for logged and unloged user and widget content is different
+for theese usecases. Let's now write action creator for logging user:
+```js
+// Everything has to be in action creator
+
+function logUser(email, pwd) {
+  return (dispach, getState) {
+    dispach(//signal that i am logging user)
+    ajax(//make ajax for logging user)
+    .then((user) {
+      dispach(user);
+      // now we should check what widget are visible and make request for loading data for them
+      // because they can't do it for themself
+      const state = getState();
+      tryLoadDataForWidget1(state);
+      tryLoadDataForWidget2(state);
+      tryLoadDataForWidget3(state);
+    })
+  }
+}
+```
+Now if you look in this function it is clearly doing to much. It's responsibility is to log
+user and do all stuff that should happen after user log in.
+
+Now if you remake it into effect.
+```js
+logUser(dispach) {
+  ajax(//make ajax for logging user)
+  .than((user) => dispach({type: "USER_SUCCESFULLY_LOGGED", user}))
+}
+
+userReducer(state, action) {
+  ...
+  case LOG_USER:
+    //set state to logging
+    return withSideEffect(newState, logUser)
+  ...
+}
+
+// in file for widget1
+
+loadWidget1DataForLoggedUser(dispach) {
+  ajax(//make ajax for widget1)
+  .than((user) => dispach({type: "DATA_FOR_WIDGET1", user}))
+}
+
+widget1Reducer(state, action) {
+  ...
+  case USER_SUCCESFULLY_LOGGED:
+    if (i_need_aditional_data) {
+      //set loading to state
+      return withSideEffect(newState, loadWidget1DataForLoggedUser)
+    } else {
+      return state;
+    }
+  ...
+}
+
+// files for widget2, widget3 are similar 
+```
+Now there is no function that has too many responsibilities. Everybody is responsible for his own
+state and ajax management. 
+
+And yes i know there is [Relay](https://facebook.github.io/relay) and
+[Falcor](https://github.com/Netflix/falcor) but this should not be specificaly about data fetching
+rather that sometimes is better to specify effects in reducers instead in action creators.
 
 #Thanks
 
-Thanks @jlongster for orignal [pull request](https://github.com/rackt/redux/pull/569) that 
-has not been merged but provide good inspiration.
+Thanks @jlongster for orignal [pull request](https://github.com/rackt/redux/pull/569) and insipiration.
 
 [Elm](http://elm-lang.org/) for idea of effects that i like so much.
- 
+
+[Cycle.js](http://cycle.js.org/) and [Cerebral](https://github.com/christianalfoni/cerebral) 
+frameworks(libraries) for trying to push frontend with good experimental ideas. 
 
 #License
 
