@@ -14,7 +14,7 @@ don't use it in production. API may change at any time.
 With this plugin signature of reducer is changed to 
 
 ```js 
-  (state,action) => newState | withSideEffect(newState, effect1, effect2, ...)
+  (state, action) => newState | withSideEffect(newState, effect1, effect2, ...)
 ```
 
 So simple example for logging user without async action creator will look this way
@@ -37,6 +37,7 @@ function reducer(state = defaultState, action) {
   switch(action.type) {
     case LOGIN_USER:
       new_state = ... // set state of user to loading
+      // ! NOTICE that i don’t run this function just passing it as effect
       return withSideEffect(newState, loadUser)
     case LOGIN_SUCCESSFULL:
       new_state = ... // set state of user to logged
@@ -45,7 +46,7 @@ function reducer(state = defaultState, action) {
       new_state = ... // maybe you want to retry few times before
       // you show user error so you can increase retry count
       // and return new state with same ajax to load user
-      // or if retry count is height enought return state without effect
+      // or if retry count is height enough return state without effect
   }
 }
 ```
@@ -75,24 +76,24 @@ const store = createStoreWithMiddleware(reducer);
 # What is exactly effects that i can return
 
 Effect should be anything that is pure. So object is ok. Function is also ok.
-Promises are not ok. What happen with effects is that after you dispach
-action and you return effects they are colleted by enableEffects store enhencer
-into queue and shoved back into dispach path(through middlewares). Note that that listeners
-are notified only after every effect has been dispached.
+Promises are not ok. What happen with effects is that after you dispatch
+action and you return effects they are collected by enableEffects store enhancer
+into queue and shoved back into dispatch path(through middlewares). Note that that listeners
+are notified only after every effect has been dispatched.
 
-###So that mean i can dispach from reducer? 
+###So that mean i can dispatch from reducer? 
 
 Yes and know. You can return action
-as effect and that action will be passed after original dispach has finished.
-Anyways i don't think this is good idea to dispach sync action as effect.
-So you have been warned that it's probably bad ida. 
+as effect and that action will be passed after original dispatch has finished.
+Anyways i don't think this is good idea to dispatch sync action as effect.
+So you have been warned that it's probably bad idea. 
 
-###So what sould i put in effect if it's not recomanded to put there sync actions?
+###So what should i put in effect if it's not recommended to put there sync actions?
 
-You should put there something with encapsulated "side effects" what your
+You should put there something (with encapsulated "side effects") what your
  middlewares can perform for you.
 So if you use [thunk-middleware](https://github.com/gaearon/redux-thunk)
-feel free to return fucntion that will get dispach and get state as argument.
+feel free to return function that will get dispatch and get state as argument.
 If you use some middleware that can make declarative ajax-es, you can
 put this declarative ajax as effect.
  
@@ -101,12 +102,12 @@ It's up to you what middlewares you have and therefore what kind of
 
 Just reminder don't return promises as effects. You can use 
 [redux-promise](https://github.com/acdlite/redux-promise) but only from
-action creators not as effects because promises are inherently unpure.
+action creators not as effects because promises are inherently impure.
 
 # Is this working with redux [devtools](https://github.com/gaearon/redux-devtools)
 
-Short answer yes. More detailed anwer is that in order to support replay
-and other godnes of dev tools current implementation is that for every action
+Short answer yes. More detailed answer is that in order to support replay
+and other goodness of dev tools current implementation is that for every action
 effects are evaluated only once. So if dev tools replay action this lib know that
 it should skip evaluating effects. 
 
@@ -114,19 +115,19 @@ it should skip evaluating effects.
 Limitation which you probably already follow:
 
 1. your actions has to be object
-2. you should never dispach same object twice
-3. your object should not be freezed 
+2. you should never dispatch same object twice
+3. your object should not be frozen 
 
 # Testing
 
-Testing is not realy different than as in combination of async action creator 
-and pure reducer. Normaly you would have 2 kinds of test for async actions 
-one for action creator that is's producing side effects things and second suit
+Testing is not really different than as in combination of async action creator 
+and pure reducer. Normally you would have 2 kinds of test for async actions 
+one for action creator that is producing side effects things and second suit
 of test for your pure reducers that results of async flow is stored in state.
 
-Same is true for effectfull reducers. One type of test would be that in
+Same is true for effect full reducers. One type of test would be that in
 certain state and action reducer produce some effects. Second suit of test
-is that in respons to async actions(action for async action together with responce from async action)
+is that in response to async actions(action for async action together with response from async action)
 you will get to correct state. For second scenario just use simple helper that will strip
 away effects from reducer and call reduce over action on reducer without effects.
 
@@ -148,20 +149,20 @@ const resultState = [
 # More complex motivation example
 
 Ok so you are still not convinced that this is good idea. I don't blame you and probably
-it's not best solution for all async actions. My best aproximation till now is that 
+it's not best solution for all async actions. My best approximation till now is that 
 async action that don't use getState are good as they are(in action creators).
 
 For action creators that have to read from state problem is that your getState 
 get whole state. So if you change state structure your reducer will not have problem
-with it anyway your action creators will.
+with it but your action creators will.
 
-### Page with multiple widget for logged and unloged users
+### Page with multiple widget for logged and unlogged users
 
 Imagine that you have on page multiple widgets. They can be shown or hidden. Also
-your page is accessible for logged and unloged user and widget content is different
-for theese usecases. Let's now write action creator for logging user:
+your page is accessible for logged and unlogged user and widget content is different
+for these use cases. Let's now write action creator for logging user:
 ```js
-// Everything has to be in action creator
+// everything has to be in action creator
 
 function logUser(email, pwd) {
   return (dispach, getState) {
@@ -179,14 +180,14 @@ function logUser(email, pwd) {
   }
 }
 ```
-Now if you look in this function it is clearly doing to much. It's responsibility is to log
+Now if you look in this function it is clearly doing too much. Its responsibility is to log
 user and do all stuff that should happen after user log in.
 
-Now if you remake it into effect.
+Now if you remake it into effects for loading users and effects for loading widget data, you get clear separation of concerns.
 ```js
-logUser(dispach) {
+logUser(dispatch) {
   ajax(//make ajax for logging user)
-  .than((user) => dispach({type: "USER_SUCCESFULLY_LOGGED", user}))
+  .than((user) => dispatch({type: "USER_SUCCESFULLY_LOGGED", user}))
 }
 
 userReducer(state, action) {
@@ -207,7 +208,7 @@ loadWidget1DataForLoggedUser(dispach) {
 widget1Reducer(state, action) {
   ...
   case USER_SUCCESFULLY_LOGGED:
-    if (i_need_aditional_data) {
+    if (i_need_aditional_data_for_this_widget) {
       //set loading to state
       return withSideEffect(newState, loadWidget1DataForLoggedUser)
     } else {
@@ -219,20 +220,20 @@ widget1Reducer(state, action) {
 // files for widget2, widget3 are similar 
 ```
 Now there is no function that has too many responsibilities. Everybody is responsible for his own
-state and ajax management. 
+state and own ajax management. 
 
 And yes i know there is [Relay](https://facebook.github.io/relay) and
-[Falcor](https://github.com/Netflix/falcor) but this should not be specificaly about data fetching
-rather that sometimes is better to specify effects in reducers instead in action creators.
+[Falcor](https://github.com/Netflix/falcor) but this should not be specifically about data fetching
+rather that sometimes is better to specify effects in reducers sometimes is better to abstraction in action creator but it should be up to as programmer to decide
 
 #Thanks
 
-Thanks @jlongster for orignal [pull request](https://github.com/rackt/redux/pull/569) and insipiration.
+Thanks @jlongster for original [pull request](https://github.com/rackt/redux/pull/569) and insipiration.
 
 [Elm](http://elm-lang.org/) for idea of effects that i like so much.
 
 [Cycle.js](http://cycle.js.org/) and [Cerebral](https://github.com/christianalfoni/cerebral) 
-frameworks(libraries) for trying to push frontend with good experimental ideas. 
+frameworks (libraries) for trying to push frontend with good experimental ideas. 
 
 #License
 
