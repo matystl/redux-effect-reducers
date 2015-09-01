@@ -27,10 +27,10 @@ function loadUser(dispach) {
     type: LOGIN_SUCCESSFULL,
      user
   }))
-  .catch((error) => dispach(
+  .catch((error) => dispach({
     type: LOGIN_FAILED,
     error
-  ))
+    }))
 }
 
 function reducer(state = defaultState, action) {
