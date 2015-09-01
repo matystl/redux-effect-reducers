@@ -187,7 +187,7 @@ Now if you remake it into effects for loading users and effects for loading widg
 ```js
 logUser(dispatch) {
   ajax(//make ajax for logging user)
-  .than((user) => dispatch({type: "USER_SUCCESFULLY_LOGGED", user}))
+  .then((user) => dispatch({type: "USER_SUCCESFULLY_LOGGED", user}))
 }
 
 userReducer(state, action) {
@@ -202,7 +202,7 @@ userReducer(state, action) {
 
 loadWidget1DataForLoggedUser(dispach) {
   ajax(//make ajax for widget1)
-  .than((user) => dispach({type: "DATA_FOR_WIDGET1", user}))
+  .then((user) => dispach({type: "DATA_FOR_WIDGET1", user}))
 }
 
 widget1Reducer(state, action) {
